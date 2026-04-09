@@ -1,0 +1,214 @@
+@font-face {
+  font-family: 'Digital Numbers';
+  src: url('./assets/fonts/DigitalNumbers-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.wii-card-grid {
+  position: fixed;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  column-gap: var(--wii-card-gap);
+  row-gap: var(--wii-card-row-gap);
+}
+
+.wii-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0 1.1rem;
+  text-align: left;
+  overflow: visible;
+  color: rgba(56, 62, 74, 0.9);
+  background: transparent;
+  box-shadow: none;
+  transition:
+    transform 220ms ease;
+}
+
+.wii-card__shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  filter: drop-shadow(0 8px 15px rgba(0, 0, 0, 0.22));
+  transition: filter 220ms ease;
+}
+
+.wii-card__base,
+.wii-card__gloss,
+.wii-card__shade,
+.wii-card__stroke {
+  pointer-events: none;
+}
+
+.wii-card__stroke {
+  fill: none;
+  stroke: rgba(123, 137, 152, 0.5);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  transition: stroke 220ms ease;
+}
+
+.wii-card:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.wii-card:hover .wii-card__shape {
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.26));
+}
+
+.wii-card:active {
+  transform: scale(0.992);
+}
+
+.wii-card.is-selected .wii-card__shape {
+  filter:
+    drop-shadow(0 0 0 rgba(0, 0, 0, 0))
+    drop-shadow(0 0 12px rgba(96, 197, 238, 0.42))
+    drop-shadow(0 12px 22px rgba(0, 0, 0, 0.28));
+}
+
+.wii-card.is-selected .wii-card__stroke {
+  stroke: rgba(94, 185, 223, 0.96);
+}
+
+.wii-card:focus-visible {
+  outline: 2px solid rgba(89, 187, 228, 0.95);
+  outline-offset: 3px;
+}
+
+.wii-card__label {
+  position: relative;
+  z-index: 2;
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  font-size: clamp(0.9rem, 1.22vw, 1.14rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.wii-clock {
+  position: fixed;
+  z-index: 8;
+  transform: translateX(-50%);
+  width: max-content;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.wii-clock__time,
+.wii-clock__date {
+  width: max-content;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.wii-clock__time {
+  font-family: 'Cascadia Mono', 'Consolas', 'Lucida Console', monospace;
+  font-size: calc(57.5px * var(--wii-clock-scale));
+  font-weight: 700;
+  height: calc(57.5px * var(--wii-clock-scale));
+  line-height: 1;
+  letter-spacing: 0;
+  color: rgba(104, 111, 119, 0.95);
+  font-variant-numeric: tabular-nums;
+  font-kerning: none;
+  font-feature-settings: 'kern' 0;
+  display: inline-grid;
+  grid-template-columns: repeat(2, calc(0.6em)) calc(0.28em) repeat(2, calc(0.6em));
+  justify-content: center;
+  align-items: center;
+  justify-items: center;
+  column-gap: 0;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55),
+    0 0 1px rgba(87, 94, 102, 0.35);
+}
+
+.wii-clock__digit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.wii-clock__colon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 1em;
+  line-height: 1;
+  color: rgba(104, 111, 119, 0.95);
+  transform: none;
+}
+
+.wii-clock__date {
+  margin-top: var(--wii-date-gap);
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  font-size: calc(43.7px * var(--wii-clock-scale));
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: rgba(108, 113, 121, 0.9);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.wii-overlay-button {
+  position: fixed;
+  z-index: 10;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  cursor: url('./assets/wii-hand-cursor-mini.png') 16 10, pointer;
+  background: radial-gradient(
+    circle at 35% 28%,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.12) 52%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  box-shadow:
+    inset 0 0 0 2px rgba(88, 196, 219, 0.18),
+    0 0 0 1px rgba(73, 140, 160, 0.12);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.wii-overlay-button:hover {
+  transform: scale(1.045);
+  box-shadow:
+    inset 0 0 0 2px rgba(88, 196, 219, 0.36),
+    0 0 0 6px rgba(88, 196, 219, 0.2),
+    0 14px 24px rgba(34, 70, 86, 0.24);
+  filter: brightness(1.03);
+}
+
+.wii-overlay-button:active {
+  transform: scale(0.985);
+}
+
+.wii-overlay-button:focus-visible {
+  outline: 2px solid rgba(80, 180, 205, 0.9);
+  outline-offset: 3px;
+}
+
