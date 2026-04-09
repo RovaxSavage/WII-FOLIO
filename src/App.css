@@ -47,6 +47,7 @@
 }
 
 .wii-card__base,
+.wii-card__image,
 .wii-card__gloss,
 .wii-card__shade,
 .wii-card__stroke {
@@ -60,6 +61,10 @@
   stroke-linejoin: round;
   stroke-linecap: round;
   transition: stroke 220ms ease;
+}
+
+.wii-card__image {
+  transform-origin: center;
 }
 
 .wii-card:hover {
@@ -98,6 +103,18 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.wii-card__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .wii-clock {

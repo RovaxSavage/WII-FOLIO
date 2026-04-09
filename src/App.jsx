@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import contactMiiImage from './assets/contactmewii.PNG'
+import myWorksMiiImage from './assets/myworksmii.PNG'
 
 const BG_IMAGE_SIZE = {
   width: 1600,
@@ -36,10 +38,16 @@ const GRID_VERTICAL_OFFSET = -10
 const CARD_PATH =
   'M24,6 C66,1 154,1 196,6 C210,10 218,26 218,40 C220,58 220,82 218,100 C216,118 208,132 194,136 C154,139 66,139 26,136 C12,132 4,118 2,100 C0,82 0,58 2,40 C4,26 12,10 24,6 Z'
 
-const CARDS = Array.from({ length: 8 }, (_, index) => ({
-  id: index + 1,
-  label: `Card ${index + 1}`,
-}))
+const CARDS = [
+  { id: 1, label: 'Card 1' },
+  { id: 2, label: 'Contact Me', imageSrc: contactMiiImage },
+  { id: 3, label: 'My Works', imageSrc: myWorksMiiImage },
+  { id: 4, label: 'Card 4' },
+  { id: 5, label: 'Card 5' },
+  { id: 6, label: 'Card 6' },
+  { id: 7, label: 'Card 7' },
+  { id: 8, label: 'Card 8' },
+]
 
 function getLayoutMetrics() {
   if (typeof window === 'undefined') {
@@ -198,6 +206,7 @@ function App() {
             className={`wii-card ${selectedCardId === card.id ? 'is-selected' : ''}`}
             onClick={() => setSelectedCardId(card.id)}
             aria-pressed={selectedCardId === card.id}
+            aria-label={card.label}
           >
             <svg
               className="wii-card__shape"
@@ -220,13 +229,32 @@ function App() {
                   <stop offset="58%" stopColor="rgba(0,0,0,0)" />
                   <stop offset="100%" stopColor="rgba(0,0,0,0.12)" />
                 </linearGradient>
+                <clipPath id={`wii-card-clip-${card.id}`}>
+                  <path d={CARD_PATH} />
+                </clipPath>
               </defs>
               <path className="wii-card__base" d={CARD_PATH} fill={`url(#wii-card-grad-${card.id})`} />
+              {card.imageSrc ? (
+                <image
+                  className="wii-card__image"
+                  href={card.imageSrc}
+                  x="-6"
+                  y="-6"
+                  width="232"
+                  height="152"
+                  preserveAspectRatio="xMidYMid slice"
+                  clipPath={`url(#wii-card-clip-${card.id})`}
+                />
+              ) : null}
               <path className="wii-card__gloss" d={CARD_PATH} fill={`url(#wii-card-gloss-${card.id})`} />
               <path className="wii-card__shade" d={CARD_PATH} fill={`url(#wii-card-shadow-${card.id})`} />
               <path className="wii-card__stroke" d={CARD_PATH} />
             </svg>
-            <span className="wii-card__label">{card.label}</span>
+            {card.imageSrc ? (
+              <span className="wii-card__sr-only">{card.label}</span>
+            ) : (
+              <span className="wii-card__label">{card.label}</span>
+            )}
           </button>
         ))}
       </main>
