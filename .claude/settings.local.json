@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /tmp/design)",
+      "Read(//tmp/**)",
+      "Bash(cp \"/c/Users/Developer/.claude/projects/C--Users-Developer-Desktop-Personal-WiiFolio/e576aafc-1fb6-43b3-9b78-9d1dc07e795b/tool-results/webfetch-1779366429448-l7z74j.bin\" design.tar.gz)",
+      "Bash(tar tzf *)",
+      "Bash(tar xzf *)",
+      "Bash(pwd -W)",
+      "Bash(cp -r animation-wii /c/Users/Developer/Desktop/Personal/WiiFolio/.tmp-design)",
+      "Bash(npx vite *)"
+    ]
+  }
+}

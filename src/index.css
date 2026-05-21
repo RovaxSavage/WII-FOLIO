@@ -11,13 +11,20 @@ body {
   overflow: hidden;
 }
 
-* {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   cursor: inherit;
+}
+
+button {
+  font: inherit;
 }
 
 body {
   background-color: #d6dde3;
-  background-image: url('./assets/wii-bg-custom-2.jpeg');
+  background-image: url('./assets/wii-bg-main.png');
   background-size: cover;
   background-position: center bottom;
   background-repeat: no-repeat;
