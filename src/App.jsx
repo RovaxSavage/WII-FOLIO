@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
-import contactMiiImage from './assets/contactmewii.PNG'
-import myWorksMiiImage from './assets/myworksmii.PNG'
 import BookLoader from './BookLoader'
 
 const BG_IMAGE_SIZE = {
@@ -59,7 +57,6 @@ const CHANNELS = [
     eyebrow: 'Case study',
     icon: 'spark',
     accent: '#7ac943',
-    imageSrc: myWorksMiiImage,
     summary: 'Spazio per progetti selezionati, risultati e link live.',
     title: 'Progetti con contesto e risultati',
     description:
@@ -112,7 +109,6 @@ const CHANNELS = [
     eyebrow: 'Contatti',
     icon: 'mail',
     accent: '#54bce8',
-    imageSrc: contactMiiImage,
     summary: 'Una sezione diretta per email, social e disponibilita.',
     title: 'Contatto rapido, senza frizione',
     description:
