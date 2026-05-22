@@ -114,7 +114,7 @@ function PageText({ seed }) {
   )
 }
 
-function Book({ size, pageCount, tilt, duration }) {
+function Book({ size, pageCount, tilt, duration, coverTitle }) {
   usePageKeyframes(pageCount)
 
   const zCover = pageCount + 2
@@ -149,7 +149,9 @@ function Book({ size, pageCount, tilt, duration }) {
       <div className="bl-shadow" />
       <div className="bl-leaf bl-back-cover" style={{ transform: 'translateZ(1px)' }} />
       {pages}
-      <div className="bl-leaf bl-front-cover" style={{ '--bl-z-cover': `${zCover}px` }} />
+      <div className="bl-leaf bl-front-cover" style={{ '--bl-z-cover': `${zCover}px` }}>
+        {coverTitle ? <span className="bl-cover-title">{coverTitle}</span> : null}
+      </div>
     </div>
   )
 }
@@ -161,10 +163,11 @@ export default function BookLoader({
   duration = 4.9,
   perspective = 1800,
   label,
+  coverTitle,
 }) {
   return (
     <div className="bl-stage" style={{ perspective: `${perspective}px` }} role="status" aria-live="polite">
-      <Book size={size} pageCount={pageCount} tilt={tilt} duration={duration} />
+      <Book size={size} pageCount={pageCount} tilt={tilt} duration={duration} coverTitle={coverTitle} />
       {label ? <p className="bl-status">{label}</p> : null}
     </div>
   )

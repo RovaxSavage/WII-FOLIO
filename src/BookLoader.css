@@ -127,16 +127,16 @@
 }
 
 .bl-front-cover {
+  transform-style: preserve-3d;
   background:
-    radial-gradient(120% 80% at 22% 18%, rgba(255,255,255,.96) 0%, rgba(255,255,255,0) 40%),
-    radial-gradient(60% 35% at 35% 80%, rgba(255,255,255,.60) 0%, rgba(255,255,255,0) 60%),
-    linear-gradient(135deg, #d8ecfd 0%, #b8d8f2 55%, #9ec8ec 100%);
+    linear-gradient(90deg, rgba(62,0,8,.28) 0%, rgba(62,0,8,0) 10%, rgba(255,85,95,.10) 100%),
+    linear-gradient(135deg, #bf0010 0%, #a9000f 62%, #7f000b 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.75),
-    inset 0 0 0 2px rgba(80,140,200,.12),
-    inset 6px 0 10px -4px rgba(60,120,180,.12),
-    0 10px 24px rgba(80,140,200,.20),
-    0 2px 4px rgba(60,100,160,.12);
+    inset 0 0 0 1px rgba(255,180,185,.34),
+    inset 0 0 0 2px rgba(90,0,8,.18),
+    inset 6px 0 10px -4px rgba(40,0,6,.36),
+    0 10px 24px rgba(110,0,10,.24),
+    0 2px 4px rgba(60,0,8,.16);
   border-radius: 4px 14px 14px 4px;
   animation: bl-openCover var(--bl-duration, 4.9s) cubic-bezier(.55,.05,.45,1) infinite;
 }
@@ -145,11 +145,31 @@
   content: "";
   position: absolute;
   inset: 10px 12px 10px 16px;
+  z-index: 1;
   border-radius: 2px 8px 8px 2px;
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.50),
-    inset 0 0 0 2px rgba(255,255,255,.60);
-  background: linear-gradient(160deg, rgba(255,255,255,.40), rgba(255,255,255,0) 45%);
+    inset 0 0 0 1px rgba(255,165,170,.18),
+    inset 0 0 0 2px rgba(75,0,8,.18);
+  background: transparent;
+  backface-visibility: hidden;
+  pointer-events: none;
+}
+
+.bl-cover-title {
+  position: absolute;
+  left: 14%;
+  right: 12%;
+  top: 29%;
+  z-index: 2;
+  color: rgba(255, 244, 240, 0.92);
+  font: 700 clamp(1rem, calc(var(--bl-size, 160px) * 0.135), 1.55rem)/1.02 'Trebuchet MS', 'Segoe UI', sans-serif;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow:
+    0 1px 0 rgba(60,0,8,.55),
+    0 2px 8px rgba(45,0,8,.32);
+  transform: translateZ(1px);
+  backface-visibility: hidden;
   pointer-events: none;
 }
 
@@ -161,11 +181,11 @@
   transform: rotateY(180deg);
   backface-visibility: hidden;
   background:
-    linear-gradient(90deg, rgba(80,140,200,.10) 0%, rgba(80,140,200,0) 8%, transparent 100%),
-    linear-gradient(180deg, #e6f3fc 0%, #d0e8f7 100%);
+    linear-gradient(90deg, rgba(65,0,8,.22) 0%, rgba(65,0,8,0) 10%, transparent 100%),
+    linear-gradient(180deg, #b0000f 0%, #8d000c 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(80,140,200,.08),
-    inset 0 0 0 2px rgba(255,255,255,.5);
+    inset 0 0 0 1px rgba(255,140,148,.16),
+    inset 0 0 0 2px rgba(70,0,8,.22);
 }
 
 @keyframes bl-openCover {

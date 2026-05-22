@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, memo, useEffect, useRef, useState } from 'react'
+import HTMLFlipBook from 'react-pageflip'
 import './App.css'
 import BookLoader from './BookLoader'
+import wiiPauseBarImage from './assets/wii-pause-bar.jpg'
+import woodBookBackground from './assets/wood.jpg'
 
 const BG_IMAGE_SIZE = {
   width: 1600,
@@ -153,6 +156,7 @@ const CHANNEL_VIEW_MENU = 'menu'
 const CHANNEL_VIEW_START = 'start'
 const CHANNEL_VIEW_BOOK = 'book'
 const CHANNEL_START_EXIT_MS = 460
+const BOOK_EXIT_MS = 360
 const pdfFlipbookCache = new Map()
 
 function getCachedPdfPageImages(src) {
@@ -343,12 +347,25 @@ function ChannelIcon({ type }) {
   )
 }
 
+const FlipbookImagePage = memo(forwardRef(function FlipbookImagePage({ image, pageNumber }, ref) {
+  return (
+    <div
+      ref={ref}
+      className={`wii-react-flipbook-page ${pageNumber === 1 ? 'is-cover' : ''}`}
+      data-density={pageNumber === 1 ? 'hard' : 'soft'}
+    >
+      <img src={image} alt={`Pagina ${pageNumber}`} draggable="false" />
+    </div>
+  )
+}))
+
 function CleanPdfFlipbook({ src }) {
-  const bookRef = useRef(null)
   const pageFlipRef = useRef(null)
   const [pageImages, setPageImages] = useState([])
   const [status, setStatus] = useState('Caricamento PDF')
   const [error, setError] = useState(null)
+  const [currentFlipPageIndex, setCurrentFlipPageIndex] = useState(0)
+  const [isFlipbookTurning, setIsFlipbookTurning] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -392,58 +409,71 @@ function CleanPdfFlipbook({ src }) {
     }
   }, [src])
 
-  useEffect(() => {
-    if (!bookRef.current || pageImages.length === 0) return undefined
-    let cancelled = false
-    let pageFlip
+  const handleFlipbookInit = (event) => {
+    setCurrentFlipPageIndex(Number(event.data?.page ?? 0))
+    setIsFlipbookTurning(false)
+  }
 
-    async function mountBook() {
-      const { PageFlip } = await import('page-flip')
-
-      if (cancelled || !bookRef.current) return
-
-      pageFlip = new PageFlip(bookRef.current, {
-        width: 420,
-        height: 594,
-        size: 'stretch',
-        minWidth: 260,
-        maxWidth: 510,
-        minHeight: 370,
-        maxHeight: 720,
-        showCover: true,
-        usePortrait: true,
-        drawShadow: true,
-        maxShadowOpacity: 0.24,
-        flippingTime: 700,
-        mobileScrollSupport: false,
-        autoSize: true,
-      })
-
-      pageFlip.loadFromImages(pageImages)
-      pageFlipRef.current = pageFlip
+  const handleFlipbookState = (event) => {
+    if (event.data !== 'read') {
+      setIsFlipbookTurning(true)
+      return
     }
 
-    mountBook()
+    const currentPageIndex = pageFlipRef.current?.pageFlip?.().getCurrentPageIndex?.() ?? 0
+    setCurrentFlipPageIndex(currentPageIndex)
+    setIsFlipbookTurning(false)
+  }
 
-    return () => {
-      cancelled = true
-      pageFlip?.destroy()
-      pageFlipRef.current = null
-    }
-  }, [pageImages])
+  const handleFlipbookFlip = (event) => {
+    setCurrentFlipPageIndex(Number(event.data))
+  }
+
+  const isCoverClosed = pageImages.length > 0 && !isFlipbookTurning && currentFlipPageIndex === 0
+
+  const bookClassName = [
+    'wii-clean-flipbook__book',
+    pageImages.length > 0 ? 'is-ready' : '',
+    isCoverClosed ? 'is-cover-closed' : '',
+  ].filter(Boolean).join(' ')
 
   return (
     <div className="wii-clean-flipbook" aria-label="Libro PDF sfogliabile">
       {error ? <p className="wii-clean-flipbook__status">{error}</p> : null}
       {!error && pageImages.length === 0 ? (
         <div className="wii-clean-flipbook__loader">
-          <BookLoader label={status} />
+          <BookLoader label={status} coverTitle="Street Pulse" />
         </div>
       ) : null}
-      <div
-        ref={bookRef}
-        className={`wii-clean-flipbook__book ${pageImages.length > 0 ? 'is-ready' : ''}`}
-      />
+      {pageImages.length > 0 ? (
+        <HTMLFlipBook
+          ref={pageFlipRef}
+          className={bookClassName}
+          startPage={0}
+          width={420}
+          height={594}
+          size="stretch"
+          minWidth={260}
+          maxWidth={510}
+          minHeight={370}
+          maxHeight={720}
+          showCover
+          usePortrait
+          drawShadow
+          maxShadowOpacity={0.24}
+          flippingTime={700}
+          mobileScrollSupport={false}
+          autoSize
+          showPageCorners={false}
+          onInit={handleFlipbookInit}
+          onChangeState={handleFlipbookState}
+          onFlip={handleFlipbookFlip}
+        >
+          {pageImages.map((image, index) => (
+            <FlipbookImagePage key={image} image={image} pageNumber={index + 1} />
+          ))}
+        </HTMLFlipBook>
+      ) : null}
     </div>
   )
 }
@@ -455,13 +485,15 @@ function App() {
   const [profileView, setProfileView] = useState(CHANNEL_VIEW_MENU)
   const [isProfileStartExiting, setIsProfileStartExiting] = useState(false)
   const [isBookPaused, setIsBookPaused] = useState(false)
+  const [isBookExiting, setIsBookExiting] = useState(false)
   const [now, setNow] = useState(() => new Date())
   const closeButtonRef = useRef(null)
   const profileStartExitTimerRef = useRef(null)
+  const bookExitTimerRef = useRef(null)
   const openChannel = CHANNELS.find((channel) => channel.id === openChannelId)
   const isProfileStartVisible = profileView === CHANNEL_VIEW_START
   const isBookVisible = profileView === CHANNEL_VIEW_BOOK
-  const isMainMenuVisible = (!isProfileStartVisible && !isBookVisible) || isProfileStartExiting
+  const isMainMenuVisible = (!isProfileStartVisible && !isBookVisible) || isProfileStartExiting || isBookExiting
   const timeText = formatTime(now)
   const [hours, minutes] = timeText.split(':')
   const [hourTens, hourUnits] = hours.split('')
@@ -497,6 +529,7 @@ function App() {
   useEffect(() => {
     return () => {
       window.clearTimeout(profileStartExitTimerRef.current)
+      window.clearTimeout(bookExitTimerRef.current)
     }
   }, [])
 
@@ -505,12 +538,18 @@ function App() {
       if (event.key === 'Escape') {
         if (profileView === CHANNEL_VIEW_BOOK) {
           event.preventDefault()
+          if (isBookExiting) {
+            return
+          }
+
           setIsBookPaused((isPaused) => !isPaused)
           return
         }
 
         window.clearTimeout(profileStartExitTimerRef.current)
+        window.clearTimeout(bookExitTimerRef.current)
         setIsProfileStartExiting(false)
+        setIsBookExiting(false)
         setOpenChannelId(null)
         setProfileView(CHANNEL_VIEW_MENU)
       }
@@ -521,7 +560,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [profileView])
+  }, [isBookExiting, profileView])
 
   useEffect(() => {
     if (openChannelId) {
@@ -531,7 +570,9 @@ function App() {
 
   const openChannelById = (channelId) => {
     window.clearTimeout(profileStartExitTimerRef.current)
+    window.clearTimeout(bookExitTimerRef.current)
     setIsProfileStartExiting(false)
+    setIsBookExiting(false)
     setIsBookPaused(false)
     setSelectedChannelId(channelId)
 
@@ -547,6 +588,25 @@ function App() {
   const returnToMainMenu = () => {
     window.clearTimeout(profileStartExitTimerRef.current)
     setIsProfileStartExiting(false)
+
+    if (profileView === CHANNEL_VIEW_BOOK) {
+      if (isBookExiting) {
+        return
+      }
+
+      setIsBookExiting(true)
+      setOpenChannelId(null)
+      setSelectedChannelId(PROFILE_CHANNEL_ID)
+      bookExitTimerRef.current = window.setTimeout(() => {
+        setIsBookPaused(false)
+        setProfileView(CHANNEL_VIEW_MENU)
+        setIsBookExiting(false)
+      }, BOOK_EXIT_MS)
+      return
+    }
+
+    window.clearTimeout(bookExitTimerRef.current)
+    setIsBookExiting(false)
     setIsBookPaused(false)
     setOpenChannelId(null)
     setSelectedChannelId(PROFILE_CHANNEL_ID)
@@ -569,7 +629,9 @@ function App() {
 
   const openBook = () => {
     window.clearTimeout(profileStartExitTimerRef.current)
+    window.clearTimeout(bookExitTimerRef.current)
     setIsProfileStartExiting(false)
+    setIsBookExiting(false)
     setIsBookPaused(false)
     setSelectedChannelId(PROFILE_CHANNEL_ID)
     setOpenChannelId(null)
@@ -699,7 +761,11 @@ function App() {
         </section>
       ) : null}
       {isBookVisible ? (
-        <main className="wii-book-page" aria-label="PDF sfogliabile">
+        <main
+          className={`wii-book-page ${isBookExiting ? 'is-exiting' : ''}`}
+          style={{ '--wii-book-bg': `url(${woodBookBackground})` }}
+          aria-label="PDF sfogliabile"
+        >
           <div className="wii-book-page__reader">
             <CleanPdfFlipbook src={SAMPLE_PDF_URL} />
           </div>
@@ -709,13 +775,16 @@ function App() {
                 <h1>HOME Menu</h1>
               </header>
               <div className="wii-pause-menu__body">
-                <button type="button" className="wii-pause-menu__button" onClick={resumeBook}>
+                <button type="button" className="wii-pause-menu__button" onClick={resumeBook} disabled={isBookExiting}>
                   Resume
                 </button>
-                <button type="button" className="wii-pause-menu__button" onClick={returnToMainMenu}>
+                <button type="button" className="wii-pause-menu__button" onClick={returnToMainMenu} disabled={isBookExiting}>
                   Wii Menu
                 </button>
               </div>
+              <footer className="wii-pause-menu__footer" aria-hidden="true">
+                <img src={wiiPauseBarImage} alt="" />
+              </footer>
             </section>
           ) : null}
         </main>
