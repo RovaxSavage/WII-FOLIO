@@ -1,10 +1,10 @@
-import { forwardRef, memo, useEffect, useRef, useState } from 'react'
+import { forwardRef, memo, startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import HTMLFlipBook from 'react-pageflip'
 import './App.css'
 import BookLoader from './BookLoader'
 import blenderDiscBack from './assets/blender-disc-back.png'
 import blenderDiscFront from './assets/blender-disc-front.png'
-import discStartBackground from './assets/disc-start-background.png'
+import discStartBackgroundImage from './assets/disc-start-background.png'
 import wiiPauseBarImage from './assets/wii-pause-bar.jpg'
 import woodBookBackground from './assets/nathan-dumlao-J2gEgTPM_OA-unsplash.jpg'
 
@@ -161,6 +161,11 @@ const CHANNEL_VIEW_START = 'start'
 const CHANNEL_VIEW_BOOK = 'book'
 const CHANNEL_START_EXIT_MS = 460
 const BOOK_EXIT_MS = 360
+const DISC_START_PREVIEW_STYLE = {
+  '--wii-start-preview-bg': '#ffffff',
+  '--wii-disc-start-bg': `url(${discStartBackgroundImage})`,
+}
+const BOOK_PAGE_STYLE = { '--wii-book-bg': `url(${woodBookBackground})` }
 const pdfFlipbookCache = new Map()
 
 function getCachedPdfPageImages(src) {
@@ -351,7 +356,7 @@ function ChannelIcon({ type }) {
   )
 }
 
-function RotatingDiscPreview() {
+const RotatingDiscPreview = memo(function RotatingDiscPreview() {
   return (
     <div className="wii-start-disc" aria-hidden="true">
       <div className="wii-start-disc__float">
@@ -363,7 +368,118 @@ function RotatingDiscPreview() {
       </div>
     </div>
   )
-}
+})
+
+const ChannelStartView = memo(function ChannelStartView({
+  showStartDisc,
+  showStartPreviewImage,
+  isProfileStartExiting,
+  onClose,
+  onStart,
+}) {
+  return (
+    <section
+      className={`wii-channel-start ${showStartDisc ? 'wii-channel-start--disc' : ''} ${isProfileStartExiting ? 'is-exiting' : ''}`}
+      aria-label="Menu avvio Street Pulse"
+    >
+      <div className="wii-channel-start__stage">
+        <div
+          className={`wii-channel-start__preview ${showStartDisc ? 'wii-channel-start__preview--disc' : ''}`}
+          style={showStartDisc ? DISC_START_PREVIEW_STYLE : undefined}
+          aria-hidden={!showStartPreviewImage}
+        >
+          {showStartPreviewImage ? <img src={PROFILE_START_IMAGE_URL} alt="Street Pulse" /> : null}
+          {showStartDisc ? <RotatingDiscPreview /> : null}
+        </div>
+      </div>
+      <nav className="wii-start-bar" aria-label="Azioni canale">
+        <button type="button" className="wii-start-bar__button is-menu" onClick={onClose}>
+          Wii Menu
+        </button>
+        <button type="button" className="wii-start-bar__button is-start" onClick={onStart}>
+          Start
+        </button>
+      </nav>
+    </section>
+  )
+})
+
+const ChannelCard = memo(function ChannelCard({ channel, isSelected, onOpen, onSelect }) {
+  const channelImageSrc = channel.id === PROFILE_CHANNEL_ID ? PROFILE_IMAGE_URL : channel.imageSrc
+
+  return (
+    <button
+      type="button"
+      className={`wii-card ${channel.id === PROFILE_CHANNEL_ID ? 'is-profile' : ''} ${isSelected ? 'is-selected' : ''}`}
+      style={{ '--wii-channel-accent': channel.accent }}
+      onClick={() => onOpen(channel.id)}
+      onFocus={() => onSelect(channel.id)}
+      onMouseEnter={() => onSelect(channel.id)}
+      aria-pressed={isSelected}
+      aria-label={channel.label}
+    >
+      <svg
+        className="wii-card__shape"
+        viewBox="0 0 220 140"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <defs>
+          <radialGradient id={`wii-card-grad-${channel.id}`} cx="50%" cy="50%" r="70%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="60%" stopColor="#f0f0f0" />
+            <stop offset="100%" stopColor="#dcdcdc" />
+          </radialGradient>
+          <linearGradient id={`wii-card-gloss-${channel.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.88)" />
+            <stop offset="48%" stopColor="rgba(255,255,255,0)" />
+          </linearGradient>
+          <linearGradient id={`wii-card-shadow-${channel.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="58%" stopColor="rgba(0,0,0,0)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.12)" />
+          </linearGradient>
+          <clipPath id={`wii-card-clip-${channel.id}`}>
+            <path d={CARD_PATH} />
+          </clipPath>
+        </defs>
+        {channelImageSrc ? (
+          <image
+            className="wii-card__image"
+            href={channelImageSrc}
+            x="0"
+            y="0"
+            width="220"
+            height="140"
+            preserveAspectRatio="xMidYMid slice"
+            clipPath={`url(#wii-card-clip-${channel.id})`}
+          />
+        ) : (
+          <path className="wii-card__base" d={CARD_PATH} fill={`url(#wii-card-grad-${channel.id})`} />
+        )}
+        <path className="wii-card__gloss" d={CARD_PATH} fill={`url(#wii-card-gloss-${channel.id})`} />
+        <path className="wii-card__shade" d={CARD_PATH} fill={`url(#wii-card-shadow-${channel.id})`} />
+        <path className="wii-card__stroke" d={CARD_PATH} />
+      </svg>
+    </button>
+  )
+})
+
+const ChannelGrid = memo(function ChannelGrid({ layout, selectedChannelId, onOpen, onSelect }) {
+  return (
+    <main className="wii-card-grid" style={layout.grid} aria-label="Griglia contenuti">
+      {CHANNELS.map((channel) => (
+        <ChannelCard
+          key={channel.id}
+          channel={channel}
+          isSelected={selectedChannelId === channel.id}
+          onOpen={onOpen}
+          onSelect={onSelect}
+        />
+      ))}
+    </main>
+  )
+})
 
 const FlipbookImagePage = memo(forwardRef(function FlipbookImagePage({ image, pageNumber }, ref) {
   return (
@@ -578,18 +694,37 @@ function App() {
     }
   }, [isBookExiting, profileView])
 
-  const openChannelById = (channelId) => {
+  const selectChannelById = useCallback((channelId, defer = false) => {
+    const updateSelectedChannel = () => {
+      setSelectedChannelId((currentChannelId) => (
+        currentChannelId === channelId ? currentChannelId : channelId
+      ))
+    }
+
+    if (defer) {
+      startTransition(updateSelectedChannel)
+      return
+    }
+
+    updateSelectedChannel()
+  }, [])
+
+  const selectPreviewChannelById = useCallback((channelId) => {
+    selectChannelById(channelId, true)
+  }, [selectChannelById])
+
+  const openChannelById = useCallback((channelId) => {
     window.clearTimeout(profileStartExitTimerRef.current)
     window.clearTimeout(bookExitTimerRef.current)
     setIsProfileStartExiting(false)
     setIsBookExiting(false)
     setIsBookPaused(false)
-    setSelectedChannelId(channelId)
+    selectChannelById(channelId)
 
     setProfileView(CHANNEL_VIEW_START)
-  }
+  }, [selectChannelById])
 
-  const returnToMainMenu = () => {
+  const returnToMainMenu = useCallback(() => {
     window.clearTimeout(profileStartExitTimerRef.current)
     setIsProfileStartExiting(false)
 
@@ -599,7 +734,7 @@ function App() {
       }
 
       setIsBookExiting(true)
-      setSelectedChannelId(PROFILE_CHANNEL_ID)
+      selectChannelById(PROFILE_CHANNEL_ID)
       bookExitTimerRef.current = window.setTimeout(() => {
         setIsBookPaused(false)
         setProfileView(CHANNEL_VIEW_MENU)
@@ -611,107 +746,47 @@ function App() {
     window.clearTimeout(bookExitTimerRef.current)
     setIsBookExiting(false)
     setIsBookPaused(false)
-    setSelectedChannelId(PROFILE_CHANNEL_ID)
+    selectChannelById(PROFILE_CHANNEL_ID)
     setProfileView(CHANNEL_VIEW_MENU)
-  }
+  }, [isBookExiting, profileView, selectChannelById])
 
-  const closeProfileStartToMainMenu = () => {
+  const closeProfileStartToMainMenu = useCallback(() => {
     if (isProfileStartExiting) {
       return
     }
 
     setIsProfileStartExiting(true)
     profileStartExitTimerRef.current = window.setTimeout(() => {
-      setSelectedChannelId(PROFILE_CHANNEL_ID)
+      selectChannelById(PROFILE_CHANNEL_ID)
       setProfileView(CHANNEL_VIEW_MENU)
       setIsProfileStartExiting(false)
     }, CHANNEL_START_EXIT_MS)
-  }
+  }, [isProfileStartExiting, selectChannelById])
 
-  const openBook = () => {
+  const openBook = useCallback(() => {
     window.clearTimeout(profileStartExitTimerRef.current)
     window.clearTimeout(bookExitTimerRef.current)
     setIsProfileStartExiting(false)
     setIsBookExiting(false)
     setIsBookPaused(false)
-    setSelectedChannelId(PROFILE_CHANNEL_ID)
+    selectChannelById(PROFILE_CHANNEL_ID)
     setProfileView(CHANNEL_VIEW_BOOK)
-  }
+  }, [selectChannelById])
 
-  const resumeBook = () => {
+  const resumeBook = useCallback(() => {
     setIsBookPaused(false)
-  }
+  }, [])
 
   return (
     <>
       {isMainMenuVisible ? (
         <>
-          <main className="wii-card-grid" style={layout.grid} aria-label="Griglia contenuti">
-            {CHANNELS.map((channel) => {
-              const channelImageSrc = channel.id === PROFILE_CHANNEL_ID ? PROFILE_IMAGE_URL : channel.imageSrc
-              const cardShape = (
-                <svg
-                  className="wii-card__shape"
-                  viewBox="0 0 220 140"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <defs>
-                    <radialGradient id={`wii-card-grad-${channel.id}`} cx="50%" cy="50%" r="70%">
-                      <stop offset="0%" stopColor="#ffffff" />
-                      <stop offset="60%" stopColor="#f0f0f0" />
-                      <stop offset="100%" stopColor="#dcdcdc" />
-                    </radialGradient>
-                    <linearGradient id={`wii-card-gloss-${channel.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="rgba(255,255,255,0.88)" />
-                      <stop offset="48%" stopColor="rgba(255,255,255,0)" />
-                    </linearGradient>
-                    <linearGradient id={`wii-card-shadow-${channel.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="58%" stopColor="rgba(0,0,0,0)" />
-                      <stop offset="100%" stopColor="rgba(0,0,0,0.12)" />
-                    </linearGradient>
-                    <clipPath id={`wii-card-clip-${channel.id}`}>
-                      <path d={CARD_PATH} />
-                    </clipPath>
-                  </defs>
-                  {channelImageSrc ? (
-                    <image
-                      className="wii-card__image"
-                      href={channelImageSrc}
-                      x="0"
-                      y="0"
-                      width="220"
-                      height="140"
-                      preserveAspectRatio="xMidYMid slice"
-                      clipPath={`url(#wii-card-clip-${channel.id})`}
-                    />
-                  ) : (
-                    <path className="wii-card__base" d={CARD_PATH} fill={`url(#wii-card-grad-${channel.id})`} />
-                  )}
-                  <path className="wii-card__gloss" d={CARD_PATH} fill={`url(#wii-card-gloss-${channel.id})`} />
-                  <path className="wii-card__shade" d={CARD_PATH} fill={`url(#wii-card-shadow-${channel.id})`} />
-                  <path className="wii-card__stroke" d={CARD_PATH} />
-                </svg>
-              )
-
-              return (
-                <button
-                  key={channel.id}
-                  type="button"
-                  className={`wii-card ${channel.id === PROFILE_CHANNEL_ID ? 'is-profile' : ''} ${selectedChannelId === channel.id ? 'is-selected' : ''}`}
-                  style={{ '--wii-channel-accent': channel.accent }}
-                  onClick={() => openChannelById(channel.id)}
-                  onFocus={() => setSelectedChannelId(channel.id)}
-                  onMouseEnter={() => setSelectedChannelId(channel.id)}
-                  aria-pressed={selectedChannelId === channel.id}
-                  aria-label={channel.label}
-                >
-                  {cardShape}
-                </button>
-              )
-            })}
-          </main>
+          <ChannelGrid
+            layout={layout}
+            selectedChannelId={selectedChannelId}
+            onOpen={openChannelById}
+            onSelect={selectPreviewChannelById}
+          />
           <div className="wii-clock" style={layout.clock} aria-label="Ora e data">
             <div className="wii-clock__time" aria-label={timeText}>
               <span className="wii-clock__digit">{hourTens}</span>
@@ -741,37 +816,18 @@ function App() {
         </>
       ) : null}
       {isProfileStartVisible ? (
-        <section
-          className={`wii-channel-start ${showStartDisc ? 'wii-channel-start--disc' : ''} ${isProfileStartExiting ? 'is-exiting' : ''}`}
-          aria-label="Menu avvio Street Pulse"
-        >
-          <div className="wii-channel-start__stage">
-            <div
-              className={`wii-channel-start__preview ${showStartDisc ? 'wii-channel-start__preview--disc' : ''}`}
-              style={showStartDisc ? {
-                '--wii-start-preview-bg': '#17191d',
-                '--wii-disc-start-bg': `url(${discStartBackground})`,
-              } : undefined}
-              aria-hidden={!showStartPreviewImage}
-            >
-              {showStartPreviewImage ? <img src={PROFILE_START_IMAGE_URL} alt="Street Pulse" /> : null}
-              {showStartDisc ? <RotatingDiscPreview /> : null}
-            </div>
-          </div>
-          <nav className="wii-start-bar" aria-label="Azioni canale">
-            <button type="button" className="wii-start-bar__button is-menu" onClick={closeProfileStartToMainMenu}>
-              Wii Menu
-            </button>
-            <button type="button" className="wii-start-bar__button is-start" onClick={openBook}>
-              Start
-            </button>
-          </nav>
-        </section>
+        <ChannelStartView
+          showStartDisc={showStartDisc}
+          showStartPreviewImage={showStartPreviewImage}
+          isProfileStartExiting={isProfileStartExiting}
+          onClose={closeProfileStartToMainMenu}
+          onStart={openBook}
+        />
       ) : null}
       {isBookVisible ? (
         <main
           className={`wii-book-page ${isBookExiting ? 'is-exiting' : ''}`}
-          style={{ '--wii-book-bg': `url(${woodBookBackground})` }}
+          style={BOOK_PAGE_STYLE}
           aria-label="PDF sfogliabile"
         >
           <div className="wii-book-page__reader">
