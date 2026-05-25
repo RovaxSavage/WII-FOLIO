@@ -2,8 +2,11 @@ import { forwardRef, memo, useEffect, useRef, useState } from 'react'
 import HTMLFlipBook from 'react-pageflip'
 import './App.css'
 import BookLoader from './BookLoader'
+import blenderDiscBack from './assets/blender-disc-back.png'
+import blenderDiscFront from './assets/blender-disc-front.png'
+import discStartBackground from './assets/disc-start-background.png'
 import wiiPauseBarImage from './assets/wii-pause-bar.jpg'
-import woodBookBackground from './assets/wood.jpg'
+import woodBookBackground from './assets/nathan-dumlao-J2gEgTPM_OA-unsplash.jpg'
 
 const BG_IMAGE_SIZE = {
   width: 1600,
@@ -149,6 +152,7 @@ const CHANNELS = [
 
 const CONTACT_CHANNEL_ID = 'contact'
 const PROFILE_CHANNEL_ID = 'profile'
+const PROJECT_CHANNEL_ID = 'projects'
 const SAMPLE_PDF_URL = '/street-pulse.pdf'
 const PROFILE_IMAGE_URL = '/street-pulse-card.png'
 const PROFILE_START_IMAGE_URL = '/street-pulse-start.png'
@@ -347,6 +351,20 @@ function ChannelIcon({ type }) {
   )
 }
 
+function RotatingDiscPreview() {
+  return (
+    <div className="wii-start-disc" aria-hidden="true">
+      <div className="wii-start-disc__float">
+        <div className="wii-start-disc__disc">
+          <img className="wii-start-disc__face is-front" src={blenderDiscFront} alt="" draggable="false" />
+          <img className="wii-start-disc__face is-back" src={blenderDiscBack} alt="" draggable="false" />
+          <span className="wii-start-disc__back-reflection" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const FlipbookImagePage = memo(forwardRef(function FlipbookImagePage({ image, pageNumber }, ref) {
   return (
     <div
@@ -450,13 +468,13 @@ function CleanPdfFlipbook({ src }) {
           ref={pageFlipRef}
           className={bookClassName}
           startPage={0}
-          width={420}
-          height={594}
+          width={504}
+          height={713}
           size="stretch"
-          minWidth={260}
-          maxWidth={510}
-          minHeight={370}
-          maxHeight={720}
+          minWidth={312}
+          maxWidth={612}
+          minHeight={444}
+          maxHeight={864}
           showCover
           usePortrait
           drawShadow
@@ -481,19 +499,18 @@ function CleanPdfFlipbook({ src }) {
 function App() {
   const [layout, setLayout] = useState(() => getLayoutState())
   const [selectedChannelId, setSelectedChannelId] = useState(CHANNELS[0].id)
-  const [openChannelId, setOpenChannelId] = useState(null)
   const [profileView, setProfileView] = useState(CHANNEL_VIEW_MENU)
   const [isProfileStartExiting, setIsProfileStartExiting] = useState(false)
   const [isBookPaused, setIsBookPaused] = useState(false)
   const [isBookExiting, setIsBookExiting] = useState(false)
   const [now, setNow] = useState(() => new Date())
-  const closeButtonRef = useRef(null)
   const profileStartExitTimerRef = useRef(null)
   const bookExitTimerRef = useRef(null)
-  const openChannel = CHANNELS.find((channel) => channel.id === openChannelId)
   const isProfileStartVisible = profileView === CHANNEL_VIEW_START
   const isBookVisible = profileView === CHANNEL_VIEW_BOOK
   const isMainMenuVisible = (!isProfileStartVisible && !isBookVisible) || isProfileStartExiting || isBookExiting
+  const showStartPreviewImage = selectedChannelId === PROFILE_CHANNEL_ID
+  const showStartDisc = selectedChannelId === PROJECT_CHANNEL_ID
   const timeText = formatTime(now)
   const [hours, minutes] = timeText.split(':')
   const [hourTens, hourUnits] = hours.split('')
@@ -550,7 +567,6 @@ function App() {
         window.clearTimeout(bookExitTimerRef.current)
         setIsProfileStartExiting(false)
         setIsBookExiting(false)
-        setOpenChannelId(null)
         setProfileView(CHANNEL_VIEW_MENU)
       }
     }
@@ -562,12 +578,6 @@ function App() {
     }
   }, [isBookExiting, profileView])
 
-  useEffect(() => {
-    if (openChannelId) {
-      closeButtonRef.current?.focus()
-    }
-  }, [openChannelId])
-
   const openChannelById = (channelId) => {
     window.clearTimeout(profileStartExitTimerRef.current)
     window.clearTimeout(bookExitTimerRef.current)
@@ -576,13 +586,7 @@ function App() {
     setIsBookPaused(false)
     setSelectedChannelId(channelId)
 
-    if (channelId === PROFILE_CHANNEL_ID) {
-      setOpenChannelId(null)
-      setProfileView(CHANNEL_VIEW_START)
-      return
-    }
-
-    setOpenChannelId(channelId)
+    setProfileView(CHANNEL_VIEW_START)
   }
 
   const returnToMainMenu = () => {
@@ -595,7 +599,6 @@ function App() {
       }
 
       setIsBookExiting(true)
-      setOpenChannelId(null)
       setSelectedChannelId(PROFILE_CHANNEL_ID)
       bookExitTimerRef.current = window.setTimeout(() => {
         setIsBookPaused(false)
@@ -608,7 +611,6 @@ function App() {
     window.clearTimeout(bookExitTimerRef.current)
     setIsBookExiting(false)
     setIsBookPaused(false)
-    setOpenChannelId(null)
     setSelectedChannelId(PROFILE_CHANNEL_ID)
     setProfileView(CHANNEL_VIEW_MENU)
   }
@@ -620,7 +622,6 @@ function App() {
 
     setIsProfileStartExiting(true)
     profileStartExitTimerRef.current = window.setTimeout(() => {
-      setOpenChannelId(null)
       setSelectedChannelId(PROFILE_CHANNEL_ID)
       setProfileView(CHANNEL_VIEW_MENU)
       setIsProfileStartExiting(false)
@@ -634,7 +635,6 @@ function App() {
     setIsBookExiting(false)
     setIsBookPaused(false)
     setSelectedChannelId(PROFILE_CHANNEL_ID)
-    setOpenChannelId(null)
     setProfileView(CHANNEL_VIEW_BOOK)
   }
 
@@ -742,12 +742,20 @@ function App() {
       ) : null}
       {isProfileStartVisible ? (
         <section
-          className={`wii-channel-start ${isProfileStartExiting ? 'is-exiting' : ''}`}
+          className={`wii-channel-start ${showStartDisc ? 'wii-channel-start--disc' : ''} ${isProfileStartExiting ? 'is-exiting' : ''}`}
           aria-label="Menu avvio Street Pulse"
         >
           <div className="wii-channel-start__stage">
-            <div className="wii-channel-start__preview">
-              <img src={PROFILE_START_IMAGE_URL} alt="Street Pulse" />
+            <div
+              className={`wii-channel-start__preview ${showStartDisc ? 'wii-channel-start__preview--disc' : ''}`}
+              style={showStartDisc ? {
+                '--wii-start-preview-bg': '#17191d',
+                '--wii-disc-start-bg': `url(${discStartBackground})`,
+              } : undefined}
+              aria-hidden={!showStartPreviewImage}
+            >
+              {showStartPreviewImage ? <img src={PROFILE_START_IMAGE_URL} alt="Street Pulse" /> : null}
+              {showStartDisc ? <RotatingDiscPreview /> : null}
             </div>
           </div>
           <nav className="wii-start-bar" aria-label="Azioni canale">
@@ -788,58 +796,6 @@ function App() {
             </section>
           ) : null}
         </main>
-      ) : null}
-      {openChannel ? (
-        <div className="wii-panel-backdrop" role="presentation" onPointerDown={() => setOpenChannelId(null)}>
-          <section
-            className={`wii-channel-panel ${openChannel.id === PROFILE_CHANNEL_ID ? 'wii-channel-panel--flipbook' : ''}`}
-            style={{ '--wii-channel-accent': openChannel.accent }}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={openChannel.id === PROFILE_CHANNEL_ID ? undefined : 'wii-channel-title'}
-            aria-label={openChannel.id === PROFILE_CHANNEL_ID ? 'PDF sfogliabile' : undefined}
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            <button
-              ref={closeButtonRef}
-              type="button"
-              className="wii-channel-panel__close"
-              onClick={() => setOpenChannelId(null)}
-              aria-label="Chiudi canale"
-            >
-              <span aria-hidden="true">x</span>
-            </button>
-            {openChannel.id === PROFILE_CHANNEL_ID ? (
-              <div className="wii-flipbook-reader">
-                <CleanPdfFlipbook src={SAMPLE_PDF_URL} />
-              </div>
-            ) : (
-              <>
-                <div className="wii-channel-panel__masthead">
-                  <ChannelIcon type={openChannel.icon} />
-                  <div>
-                    <p>{openChannel.eyebrow}</p>
-                    <h1 id="wii-channel-title">{openChannel.title}</h1>
-                  </div>
-                </div>
-                <p className="wii-channel-panel__description">{openChannel.description}</p>
-                <ul className="wii-channel-panel__list" aria-label="Punti chiave">
-                  {openChannel.highlights.map((highlight) => (
-                    <li key={highlight}>{highlight}</li>
-                  ))}
-                </ul>
-                <div className="wii-channel-panel__actions">
-                  <button type="button" onClick={() => setOpenChannelId(null)}>
-                    Menu
-                  </button>
-                  <button type="button" onClick={() => openChannelById(CONTACT_CHANNEL_ID)}>
-                    Contatti
-                  </button>
-                </div>
-              </>
-            )}
-          </section>
-        </div>
       ) : null}
     </>
   )

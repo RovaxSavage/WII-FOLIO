@@ -410,6 +410,12 @@
   animation: wii-channel-in 360ms ease both;
 }
 
+.wii-channel-start--disc {
+  background:
+    linear-gradient(180deg, rgba(18, 20, 24, 0.98), rgba(24, 27, 32, 0.98)),
+    #17191d;
+}
+
 .wii-channel-start::before,
 .wii-book-page::before {
   position: absolute;
@@ -418,6 +424,10 @@
   content: '';
   background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 68%);
   pointer-events: none;
+}
+
+.wii-channel-start--disc::before {
+  background: radial-gradient(ellipse at 50% 0%, rgba(82, 87, 94, 0.34), rgba(23, 25, 29, 0) 68%);
 }
 
 .wii-channel-start__stage {
@@ -429,6 +439,10 @@
   padding: 0;
 }
 
+.wii-channel-start--disc .wii-channel-start__stage {
+  background: #17191d;
+}
+
 .wii-channel-start__preview {
   position: relative;
   display: grid;
@@ -436,11 +450,11 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #f6fbff;
+  background: var(--wii-start-preview-bg, #f6fbff);
   animation: wii-preview-pop 520ms 80ms ease both;
 }
 
-.wii-channel-start__preview img {
+.wii-channel-start__preview > img {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -449,6 +463,114 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
+}
+
+.wii-channel-start__preview--disc {
+  perspective: 1100px;
+  background:
+    linear-gradient(180deg, rgba(10, 12, 15, 0.08), rgba(10, 12, 15, 0.22)),
+    var(--wii-disc-start-bg) center / cover no-repeat,
+    #17191d;
+}
+
+.wii-channel-start__preview--disc::before,
+.wii-channel-start__preview--disc::after {
+  display: none;
+}
+
+.wii-start-disc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(46svh, 42vw, 420px);
+  aspect-ratio: 1;
+  transform-style: preserve-3d;
+}
+
+.wii-start-disc__float {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: wii-disc-float 9.5s ease-in-out infinite;
+}
+
+.wii-start-disc__disc {
+  --disc-depth: 1px;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: wii-disc-spin 18s linear infinite;
+  filter: drop-shadow(0 22px 26px rgba(31, 43, 56, 0.24));
+}
+
+.wii-start-disc__disc::before {
+  position: absolute;
+  inset: 0;
+  content: '';
+  border-radius: 50%;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+
+.wii-start-disc__disc::before {
+  z-index: 0;
+  border: 2px solid rgba(24, 26, 29, 0.45);
+  box-sizing: border-box;
+  transform: translateZ(0);
+}
+
+.wii-start-disc__face {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  backface-visibility: visible;
+  transform-style: preserve-3d;
+  user-select: none;
+}
+
+.wii-start-disc__face.is-front {
+  animation: wii-disc-front-face 18s linear infinite;
+  transform: translateZ(var(--disc-depth));
+}
+
+.wii-start-disc__face.is-back {
+  animation: wii-disc-back-face 18s linear infinite;
+  transform: rotateY(180deg) translateZ(var(--disc-depth));
+}
+
+.wii-start-disc__back-reflection {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      112deg,
+      rgba(255, 255, 255, 0) 0 34%,
+      rgba(255, 255, 255, 0.28) 43%,
+      rgba(139, 226, 255, 0.24) 48%,
+      rgba(255, 255, 255, 0.12) 54%,
+      rgba(255, 255, 255, 0) 66% 100%
+    );
+  background-size: 220% 100%;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: rotateY(180deg) translateZ(calc(var(--disc-depth) + 0.2px));
+  transform-style: preserve-3d;
+  animation:
+    wii-disc-back-face 18s linear infinite,
+    wii-disc-back-reflection 5.6s ease-in-out infinite;
+  -webkit-mask:
+    radial-gradient(circle, transparent 0 8.8%, #000 9.4% 96%, transparent 98.8%);
+  mask:
+    radial-gradient(circle, transparent 0 8.8%, #000 9.4% 96%, transparent 98.8%);
 }
 
 .wii-channel-start__preview::before,
@@ -581,18 +703,13 @@
 
 .wii-book-page__reader::before {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  inset: 0;
   z-index: 0;
-  width: 100svh;
-  height: 100vw;
   content: '';
   background:
     linear-gradient(rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.1)),
     var(--wii-book-bg) center / cover no-repeat,
     #b56f31;
-  transform: translate(-50%, -50%) rotate(90deg);
-  transform-origin: center;
 }
 
 .wii-pause-menu {
@@ -728,6 +845,66 @@
   to {
     opacity: 0;
     transform: translateY(16px) scale(0.96);
+  }
+}
+
+@keyframes wii-disc-spin {
+  from {
+    transform: rotateX(7deg) rotateY(0deg);
+  }
+
+  to {
+    transform: rotateX(7deg) rotateY(360deg);
+  }
+}
+
+@keyframes wii-disc-front-face {
+  0%,
+  24.9%,
+  75.1%,
+  100% {
+    opacity: 1;
+  }
+
+  25.1%,
+  74.9% {
+    opacity: 0;
+  }
+}
+
+@keyframes wii-disc-back-face {
+  0%,
+  24.9%,
+  75.1%,
+  100% {
+    opacity: 0;
+  }
+
+  25.1%,
+  74.9% {
+    opacity: 1;
+  }
+}
+
+@keyframes wii-disc-back-reflection {
+  0%,
+  100% {
+    background-position: 135% 50%;
+  }
+
+  50% {
+    background-position: -35% 50%;
+  }
+}
+
+@keyframes wii-disc-float {
+  0%,
+  100% {
+    transform: translateY(-8px);
+  }
+
+  50% {
+    transform: translateY(12px);
   }
 }
 
